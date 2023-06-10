@@ -82,8 +82,8 @@ black = 0x000000
 red = 0xFF0000
 
 # EPD Display Dimensions
-EPD_WIDTH = 296
-EPD_HEIGHT = 128
+EPD_HEIGHT = 296
+EPD_WIDTH = 128
 
 # Setup EPD Display Bus 
 display_epd_bus = displayio.FourWire(spi, command=epd_dc, chip_select=epd_cs, reset=epd_reset, baudrate=1000000)
@@ -97,7 +97,7 @@ display_epd = adafruit_uc8151d.UC8151D(
     display_epd_bus,
     width=EPD_WIDTH,
     height=EPD_HEIGHT,
-    rotation=270,
+    rotation=180,
     busy_pin=epd_busy,
     highlight_color=0xFF0000,
 )
@@ -112,7 +112,7 @@ display_group_imu = displayio.Group()
 
 epd_group_dope = displayio.Group()
 epd_group_projectile = displayio.Group()
-epd_group_dope_table = displayio.Group()
+epd_group_dope_table = displayio.Group(scale=2)
 
 # Set a background
 background_bitmap = displayio.Bitmap(EPD_WIDTH, EPD_HEIGHT, 1)
@@ -145,8 +145,8 @@ gyro_raw_label = label.Label(font, text="GYRO\r\nX: ----  Y: ---- Z: ---- rads/s
 compass_label = label.Label(font, text="COMPASS\r\n--- degrees", color=white, x=0, y=35)
 
 projectile_label = label.Label(font, text="22LR CCI SV 40GR", color=black, x=0, y=5)
-range_label = label.Label(font, text="75m\r\n100m\r\n125m\r\n150m\r\n175\r\n200m", color=black, x=0, y=0)
-mrad_label = label.Label(font, text="U1.0\r\nU2.3\r\nU3.7\r\nU5.2\r\n6.8\r\nU8.5", color=black, x= 100, y=0)
+range_label = label.Label(font, text="75m\r\n100m\r\n125m\r\n150m\r\n175m\r\n200m\r\n225m\r\n250m\r\n275m", color=black, x=0, y=0)
+mrad_label = label.Label(font, text="U1.0\r\nU2.3\r\nU3.7\r\nU5.2\r\nU6.8\r\nU8.5\r\nU10.3\r\nU12.2\r\nU14.1", color=black, x= 35, y=0)
 
 # Append Labels to Display Groups
 display_group_battery.append(batt_percent_label)
