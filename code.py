@@ -8,6 +8,7 @@ import displayio
 import adafruit_max1704x
 import adafruit_uc8151d
 from adafruit_display_text import label
+from adafruit_bme280 import basic as adafruit_bme280
 from adafruit_bno08x import (
     BNO_REPORT_ACCELEROMETER,
     BNO_REPORT_GYROSCOPE,
@@ -29,6 +30,7 @@ epd_busy = board.D13
 
 # Setup sensors
 bno = BNO08X_UART(uart)
+bme = adafruit_bme280.Adafruit_BME280_I2C(i2c)
 bat = adafruit_max1704x.MAX17048(i2c)
 
 # Setup LEDs
@@ -39,6 +41,9 @@ bno.enable_feature(BNO_REPORT_ACCELEROMETER)
 bno.enable_feature(BNO_REPORT_GYROSCOPE)
 bno.enable_feature(BNO_REPORT_MAGNETOMETER)
 bno.enable_feature(BNO_REPORT_ROTATION_VECTOR)
+
+# Setup sea-level
+bme.sea_level_pressure = 1013.25
 
 # Battery
 def print_battery():
@@ -105,11 +110,13 @@ display_epd = adafruit_uc8151d.UC8151D(
 # Create TFT display object
 display_tft = board.DISPLAY
 
-# Display Groups
+# TFT Display Groups
 display_group_diag = displayio.Group()
 display_group_battery = displayio.Group()
 display_group_imu = displayio.Group()
+display_group_bme = displayio.Group()
 
+# EPD Display Groups
 epd_group_dope = displayio.Group()
 epd_group_projectile = displayio.Group()
 epd_group_dope_table = displayio.Group(scale=2)
@@ -120,7 +127,7 @@ background_bitmap = displayio.Bitmap(EPD_WIDTH, EPD_HEIGHT, 1)
 palette = displayio.Palette(1)
 palette[0] = white
 
-# Create a Tilegrid with the background and put in the displayio group
+# Create a Tilegrid for white background on the EPD
 epd_background = displayio.TileGrid(background_bitmap, pixel_shader=palette)
 epd_group_dope.append(epd_background)
 
@@ -133,17 +140,22 @@ epd_group_dope_table.y = 25
 # Merging groups to their respective main displays
 display_group_diag.append(display_group_battery)
 display_group_diag.append(display_group_imu)
+display_group_diag.append(display_group_bme)
 
 epd_group_dope.append(epd_group_projectile)
 epd_group_dope.append(epd_group_dope_table)
 
-# Setup Text Labels
+# Setup TFT Labels
 batt_percent_label = label.Label(font, text="BATTERY REMAINING: {:.1f}%".format(bat.cell_percent), color=white, x=0, y=5)
 batt_voltage_label = label.Label(font, text="BATTERY VOLTAGE: {:.2f}V".format(bat.cell_voltage), color=white, x=0, y=15)
 batt_charge_rate_label = label.Label(font, text="BATTERY (DIS)CHARGE RATE: {:.2f}%/hr".format(bat.charge_rate), color=white, x=0, y=25)
 gyro_raw_label = label.Label(font, text="GYRO\r\nX: ----  Y: ---- Z: ---- rads/s", color=white, x=0, y=5)
 compass_label = label.Label(font, text="COMPASS\r\n--- degrees", color=white, x=0, y=35)
+temperature_label = label.Label(font, text="TEMPERATURE: {:.1f} C".format(bme.temperature), color=white,x=0, y=5)
+humidity_label = label.Label(font, text="HUMIDITY: {:.1f} %".format(bme.humidity), color=white, x=0,y=15)
+pressure_label = label.Label(font, text="PRESSURE: {:.1f} hPa".format(bme.pressure), color=white, x=0, y=25)
 
+# EPD Labels
 projectile_label = label.Label(font, text="22LR CCI SV 40GR", color=black, x=0, y=5)
 range_label = label.Label(font, text="75m\r\n100m\r\n125m\r\n150m\r\n175m\r\n200m\r\n225m\r\n250m\r\n275m", color=black, x=0, y=0)
 mrad_label = label.Label(font, text="U1.0\r\nU2.3\r\nU3.7\r\nU5.2\r\nU6.8\r\nU8.5\r\nU10.3\r\nU12.2\r\nU14.1", color=black, x= 35, y=0)
@@ -171,6 +183,7 @@ def display_update_gyro():
 
     gyro_raw_label.text = "GYRO\r\nX: %0.4f  Y: %0.4f Z: %0.4f rads/s" % (gyro_x, gyro_y, gyro_z)
 
+# Compass Display
 def display_update_compass():
     mag_x, mag_y, mag_z = bno.magnetic
 
@@ -181,6 +194,12 @@ def display_update_compass():
     
     compass_label.text = "MAGNETIC COMPASS\r\n{:.0f} degrees".format(compass_bearing)
 
+# Environmental Display
+def display_update_bme():
+    temperature_label.text = "TEMPERATURE: {:.1f} C".format(bme.temperature)
+    humidity_label.text = "HUMIDITY: {:.1f} %".format(bme.humidity)
+    pressure_label.text = "PRESSURE: {:.1f} hPa".format(bme.pressure)
+
 display_epd.show(epd_group_dope)
 display_epd.refresh()
 
@@ -188,4 +207,5 @@ while True:
     display_update_battery()
     display_update_gyro()
     display_update_compass()
+    display_update_bme()
     display_tft.show(display_group_diag)
