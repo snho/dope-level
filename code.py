@@ -223,8 +223,8 @@ def display_update_bme():
     humidity_label.text = "HUMIDITY: {:.1f} %".format(bme.humidity)
     pressure_label.text = "PRESSURE: {:.1f} hPa".format(bme.pressure)
 
-display_epd.show(epd_group_dope)
-display_epd.refresh()
+# display_epd.show(epd_group_dope)
+# display_epd.refresh()
 
 while True:
     # Update button states
@@ -235,12 +235,20 @@ while True:
     button_right.update()
     button_board.update()
 
+    # EPD Protection
+    epd_last_refreshed = 0
+
     if button_board.pressed:
-        print("Board Button Pressed")
-        cartridge_types_index = (cartridge_types_index + 1) % len(cartridge_types)
-        cartridge_label.text = cartridge_types[cartridge_types_index]
-        mrad_label.txt = drop_table[drop_table_index]
-        display_epd.refresh()
+        if epd_last_refreshed + 180 > time.monotonic:
+            print("Board Button Pressed")
+            cartridge_types_index = (cartridge_types_index + 1) % len(cartridge_types)
+            cartridge_label.text = cartridge_types[cartridge_types_index]
+            mrad_label.txt = drop_table[drop_table_index]
+            epd_last_refreshed = time.monotonic()
+            display_epd.show(epd_group_dope)
+            display_epd.refresh()
+        else:
+            print("EPD refreshed too early!")
 
     if button_select.pressed:
         print("Select Button Pressed")
