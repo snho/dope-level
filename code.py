@@ -134,6 +134,9 @@ epd_group_dope.append(epd_background)
 # Display Group Offsets
 display_group_imu.x = 0
 display_group_imu.y = 35
+display_group_bme.x = 0
+display_group_bme.y = 95
+
 epd_group_dope_table.x = 0
 epd_group_dope_table.y = 25
 
@@ -166,6 +169,9 @@ display_group_battery.append(batt_voltage_label)
 display_group_battery.append(batt_charge_rate_label)
 display_group_imu.append(gyro_raw_label)
 display_group_imu.append(compass_label)
+display_group_bme.append(temperature_label)
+display_group_bme.append(humidity_label)
+display_group_bme.append(pressure_label)
 
 epd_group_projectile.append(projectile_label)
 epd_group_dope_table.append(range_label)
@@ -200,8 +206,8 @@ def display_update_bme():
     humidity_label.text = "HUMIDITY: {:.1f} %".format(bme.humidity)
     pressure_label.text = "PRESSURE: {:.1f} hPa".format(bme.pressure)
 
-display_epd.show(epd_group_dope)
-display_epd.refresh()
+# display_epd.show(epd_group_dope)
+# display_epd.refresh()
 
 while True:
     display_update_battery()
