@@ -50,7 +50,6 @@ button_up = Button(make_button(board.A1))
 button_down = Button(make_button(board.A2))
 button_left = Button(make_button(board.A3))
 button_right = Button(make_button(board.A4))
-button_board = Button(make_button(board.BUTTON))
 
 # Enable IMU
 bno.enable_feature(BNO_REPORT_ACCELEROMETER)
@@ -150,6 +149,9 @@ epd_group_dope.append(epd_background)
 # Display Group Offsets
 display_group_imu.x = 0
 display_group_imu.y = 35
+display_group_bme.x = 0
+display_group_bme.y = 95
+
 epd_group_dope_table.x = 0
 epd_group_dope_table.y = 25
 
@@ -171,7 +173,7 @@ temperature_label = label.Label(font, text="TEMPERATURE: {:.1f} C".format(bme.te
 humidity_label = label.Label(font, text="HUMIDITY: {:.1f} %".format(bme.humidity), color=white, x=0,y=15)
 pressure_label = label.Label(font, text="PRESSURE: {:.1f} hPa".format(bme.pressure), color=white, x=0, y=25)
 
-# EPD Labels - this is temporary until I figure out SD card loading
+# EPD Labels
 cartridge_label = label.Label(font, text="22LR CCI SV 40GR", color=black, x=0, y=5)
 range_label = label.Label(font, text="75m\r\n100m\r\n125m\r\n150m\r\n175m\r\n200m\r\n225m\r\n250m\r\n275m", color=black, x=0, y=0)
 mrad_label = label.Label(font, text="U1.0\r\nU2.3\r\nU3.7\r\nU5.2\r\nU6.8\r\nU8.5\r\nU10.3\r\nU12.2\r\nU14.1", color=black, x= 35, y=0)
@@ -189,6 +191,9 @@ display_group_battery.append(batt_voltage_label)
 display_group_battery.append(batt_charge_rate_label)
 display_group_imu.append(gyro_raw_label)
 display_group_imu.append(compass_label)
+display_group_bme.append(temperature_label)
+display_group_bme.append(humidity_label)
+display_group_bme.append(pressure_label)
 
 epd_group_cartridge.append(cartridge_label)
 epd_group_dope_table.append(range_label)
@@ -226,6 +231,9 @@ def display_update_bme():
 # display_epd.show(epd_group_dope)
 # display_epd.refresh()
 
+# EPD Start Time
+epd_last_refreshed = -180.0
+
 while True:
     # Update button states
     button_select.update()
@@ -233,15 +241,17 @@ while True:
     button_down.update()
     button_left.update()
     button_right.update()
-    button_board.update()
+    # button_board.update()
 
     # EPD Protection
-    epd_last_refreshed = 0
 
-    if button_board.pressed:
-        if epd_last_refreshed + 180 > time.monotonic:
-            print("Board Button Pressed")
+    if button_select.pressed:
+        print("Board Button Pressed")
+        select_pressed = time.monotonic()
+        if select_pressed > epd_last_refreshed + 180.0:
+            print("Safe to update screen")
             cartridge_types_index = (cartridge_types_index + 1) % len(cartridge_types)
+            drop_table_index = (drop_table_index + 1) % len(drop_table)
             cartridge_label.text = cartridge_types[cartridge_types_index]
             mrad_label.txt = drop_table[drop_table_index]
             epd_last_refreshed = time.monotonic()
@@ -250,8 +260,8 @@ while True:
         else:
             print("EPD refreshed too early!")
 
-    if button_select.pressed:
-        print("Select Button Pressed")
+    # if button_select.pressed:
+    #     print("Select Button Pressed")
 
     if button_up.pressed:
         print("Up Button Pressed")
