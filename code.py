@@ -172,19 +172,19 @@ epd_group_dope.append(epd_group_cartridge)
 epd_group_dope.append(epd_group_dope_table)
 
 # Setup TFT Labels
-batt_percent_label = label.Label(font, text="BATTERY REMAINING: {:.1f}%".format(bat.cell_percent), color=white, x=0, y=5)
-batt_voltage_label = label.Label(font, text="BATTERY VOLTAGE: {:.2f}V".format(bat.cell_voltage), color=white, x=0, y=15)
-batt_charge_rate_label = label.Label(font, text="BATTERY (DIS)CHARGE RATE: {:.2f}%/hr".format(bat.charge_rate), color=white, x=0, y=25)
+batt_percent_label = label.Label(font, text="REMAINING: {:.1f} %".format(bat.cell_percent), color=white, x=0, y=5)
+batt_voltage_label = label.Label(font, text="RAW VOLTS: {:.2f} V".format(bat.cell_voltage), color=white, x=0, y=15)
+batt_charge_rate_label = label.Label(font, text="(DIS)CHARGE: {:.2f} %/hr".format(bat.charge_rate), color=white, x=0, y=25)
 gyro_raw_label = label.Label(font, text="GYRO\r\nX: ----  Y: ---- Z: ---- rads/s", color=white, x=0, y=5)
 compass_label = label.Label(font, text="COMPASS\r\n--- degrees", color=white, x=0, y=35)
-temperature_label = label.Label(font, text="TEMPERATURE: {:.1f} C".format(bme.temperature), color=white,x=0, y=5)
-humidity_label = label.Label(font, text="HUMIDITY: {:.1f} %".format(bme.humidity), color=white, x=0,y=15)
-pressure_label = label.Label(font, text="PRESSURE: {:.1f} hPa".format(bme.pressure), color=white, x=0, y=25)
+temperature_label = label.Label(font, text="TEMP: {:.1f} C".format(bme.temperature), color=white,x=0, y=5)
+humidity_label = label.Label(font, text="RH: {:.1f} %".format(bme.humidity), color=white, x=0,y=15)
+pressure_label = label.Label(font, text="PRESS: {:.1f} hPa".format(bme.pressure), color=white, x=0, y=25)
 
 # EPD Labels
 cartridge_label = label.Label(font, text="22LR CCI SV 40GR", color=black, x=0, y=5)
 range_label = label.Label(font, text="75m\r\n100m\r\n125m\r\n150m\r\n175m\r\n200m\r\n225m\r\n250m\r\n275m", color=black, x=0, y=0)
-mrad_label = label.Label(font, text="U1.0\r\nU2.3\r\nU3.7\r\nU5.2\r\nU6.8\r\nU8.5\r\nU10.3\r\nU12.2\r\nU14.1", color=black, x= 35, y=0)
+drop_table_label = label.Label(font, text="U1.0\r\nU2.3\r\nU3.7\r\nU5.2\r\nU6.8\r\nU8.5\r\nU10.3\r\nU12.2\r\nU14.1", color=black, x= 35, y=0)
 
 # EPD Load Lists
 cartridge_types = ["22LR CCI SV 40GR", "22LR AGUILA SV 40GR", "22LR REM GB 36GR"]
@@ -207,7 +207,7 @@ display_group_enviro.append(pressure_label)
 
 epd_group_cartridge.append(cartridge_label)
 epd_group_dope_table.append(range_label)
-epd_group_dope_table.append(mrad_label)
+epd_group_dope_table.append(drop_table_label)
 
 # Battery Display
 def display_update_battery():   
@@ -312,7 +312,7 @@ while True:
                 cartridge_types_index = (cartridge_types_index + 1) % len(cartridge_types)
                 drop_table_index = (drop_table_index + 1) % len(drop_table)
                 cartridge_label.text = cartridge_types[cartridge_types_index]
-                mrad_label.txt = drop_table[drop_table_index]
+                drop_table_label.text = drop_table[drop_table_index]
                 epd_last_refreshed = time.monotonic()
                 display_epd.show(epd_group_dope)
                 display_epd.refresh()
