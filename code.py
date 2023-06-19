@@ -5,8 +5,10 @@ import board
 import busio
 import neopixel
 import displayio
+import digitalio
 import adafruit_max1704x
 import adafruit_uc8151d
+from adafruit_debouncer import Button
 from adafruit_display_text import label
 from adafruit_bme280 import basic as adafruit_bme280
 from adafruit_bno08x import (
@@ -35,6 +37,19 @@ bat = adafruit_max1704x.MAX17048(i2c)
 
 # Setup LEDs
 pixel = neopixel.NeoPixel(board.NEOPIXEL, 1)
+
+# Setup buttons
+def make_button(pin):
+    button = digitalio.DigitalInOut(pin)
+    button.direction = digitalio.Direction.INPUT
+    button.pull = digitalio.Pull.UP
+    return lambda: button.value
+
+button_select = Button(make_button(board.A0))
+button_up = Button(make_button(board.A1))
+button_down = Button(make_button(board.A2))
+button_left = Button(make_button(board.A3))
+button_right = Button(make_button(board.A4))
 
 # Enable IMU
 bno.enable_feature(BNO_REPORT_ACCELEROMETER)
@@ -118,7 +133,7 @@ display_group_bme = displayio.Group()
 
 # EPD Display Groups
 epd_group_dope = displayio.Group()
-epd_group_projectile = displayio.Group()
+epd_group_cartridge = displayio.Group()
 epd_group_dope_table = displayio.Group(scale=2)
 
 # Set a background
@@ -145,7 +160,7 @@ display_group_diag.append(display_group_battery)
 display_group_diag.append(display_group_imu)
 display_group_diag.append(display_group_bme)
 
-epd_group_dope.append(epd_group_projectile)
+epd_group_dope.append(epd_group_cartridge)
 epd_group_dope.append(epd_group_dope_table)
 
 # Setup TFT Labels
@@ -159,9 +174,16 @@ humidity_label = label.Label(font, text="HUMIDITY: {:.1f} %".format(bme.humidity
 pressure_label = label.Label(font, text="PRESSURE: {:.1f} hPa".format(bme.pressure), color=white, x=0, y=25)
 
 # EPD Labels
-projectile_label = label.Label(font, text="22LR CCI SV 40GR", color=black, x=0, y=5)
+cartridge_label = label.Label(font, text="22LR CCI SV 40GR", color=black, x=0, y=5)
 range_label = label.Label(font, text="75m\r\n100m\r\n125m\r\n150m\r\n175m\r\n200m\r\n225m\r\n250m\r\n275m", color=black, x=0, y=0)
 mrad_label = label.Label(font, text="U1.0\r\nU2.3\r\nU3.7\r\nU5.2\r\nU6.8\r\nU8.5\r\nU10.3\r\nU12.2\r\nU14.1", color=black, x= 35, y=0)
+
+# EPD Load Lists
+cartridge_types = ["22LR CCI SV 40GR", "22LR AGUILA SV 40GR", "22LR REM GB 36GR"]
+cartridge_types_index = 0
+
+drop_table = ["U1.0\r\nU2.3\r\nU3.7\r\nU5.2\r\nU6.8\r\nU8.5\r\nU10.3\r\nU12.2\r\nU14.1", "U0.8\r\nU1.9\r\nU3.0\r\nU4.2\r\nU5.5\r\nU6.8\r\nU8.2\r\nU9.7\r\nU11.2", "U0.7\r\nU1.6\r\nU2.6\r\nU3.8\r\nU5.0\r\nU6.3\r\nU7.6\r\nU9.1\r\nU10.6"]
+drop_table_index = 0
 
 # Append Labels to Display Groups
 display_group_battery.append(batt_percent_label)
@@ -173,7 +195,7 @@ display_group_bme.append(temperature_label)
 display_group_bme.append(humidity_label)
 display_group_bme.append(pressure_label)
 
-epd_group_projectile.append(projectile_label)
+epd_group_cartridge.append(cartridge_label)
 epd_group_dope_table.append(range_label)
 epd_group_dope_table.append(mrad_label)
 
@@ -209,7 +231,50 @@ def display_update_bme():
 # display_epd.show(epd_group_dope)
 # display_epd.refresh()
 
+# EPD Start Time
+epd_last_refreshed = -180.0
+
 while True:
+    # Update button states
+    button_select.update()
+    button_up.update()
+    button_down.update()
+    button_left.update()
+    button_right.update()
+    # button_board.update()
+
+    # EPD Protection
+
+    if button_select.pressed:
+        print("Board Button Pressed")
+        select_pressed = time.monotonic()
+        if select_pressed > epd_last_refreshed + 180.0:
+            print("Safe to update screen")
+            cartridge_types_index = (cartridge_types_index + 1) % len(cartridge_types)
+            drop_table_index = (drop_table_index + 1) % len(drop_table)
+            cartridge_label.text = cartridge_types[cartridge_types_index]
+            mrad_label.txt = drop_table[drop_table_index]
+            epd_last_refreshed = time.monotonic()
+            display_epd.show(epd_group_dope)
+            display_epd.refresh()
+        else:
+            print("EPD refreshed too early!")
+
+    # if button_select.pressed:
+    #     print("Select Button Pressed")
+
+    if button_up.pressed:
+        print("Up Button Pressed")
+    
+    if button_down.pressed:
+        print("Down Button Pressed")
+
+    if button_left.pressed:
+        print("Left Button Pressed")
+
+    if button_right.pressed:
+        print("Right Button Pressed")
+
     display_update_battery()
     display_update_gyro()
     display_update_compass()
