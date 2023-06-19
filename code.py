@@ -50,7 +50,14 @@ button_up = Button(make_button(board.A1))
 button_down = Button(make_button(board.A2))
 button_left = Button(make_button(board.A3))
 button_right = Button(make_button(board.A4))
-# button_board = Button(make_button(board.BUTTON))
+
+# Check Button State - run this often
+def update_buttons():
+    button_select.update()
+    button_up.update()
+    button_down.update()
+    button_left.update()
+    button_right.update()
 
 # Enable IMU
 bno.enable_feature(BNO_REPORT_ACCELEROMETER)
@@ -60,41 +67,6 @@ bno.enable_feature(BNO_REPORT_ROTATION_VECTOR)
 
 # Setup sea-level
 bme.sea_level_pressure = 1013.25
-
-# Battery
-def print_battery():
-    print(f"Battery voltage = {bat.cell_voltage:.2f}V")
-    print(f"Battery remaining: {bat.cell_percent:.1f}%")
-
-# Acceleration
-def print_accel():
-    print("Acceleration:")
-    accel_x, accel_y, accel_z = bno.acceleration
-    print("X: %0.6f  Y: %0.6f Z: %0.6f  m/s^2" % (accel_x, accel_y, accel_z))
-    print("")
-    
-# Gyro 
-def print_gyro():
-    print("Gyro:")
-    gyro_x, gyro_y, gyro_z = bno.gyro
-    print("X: %0.6f  Y: %0.6f Z: %0.6f rads/s" % (gyro_x, gyro_y, gyro_z))
-    print("")
-
-# Magnetometer
-def print_mag():
-    print("Magnetometer:")
-    mag_x, mag_y, mag_z = bno.magnetic
-    print("X: %0.6f  Y: %0.6f Z: %0.6f uT" % (mag_x, mag_y, mag_z))
-    print("")
-
-# Rotation Vector
-def print_vect_quat():
-    print("Rotation Vector Quaternion:")
-    quat_i, quat_j, quat_k, quat_real = bno.quaternion
-    print(
-        "I: %0.6f  J: %0.6f K: %0.6f  Real: %0.6f" % (quat_i, quat_j, quat_k, quat_real)
-    )
-    print("")
 
 # Set text, front, colour
 font = terminalio.FONT
@@ -127,11 +99,8 @@ display_epd = adafruit_uc8151d.UC8151D(
 display_tft = board.DISPLAY
 
 # TFT Display Groups
-display_group_diag = displayio.Group()
-display_group_battery = displayio.Group()
-display_group_imu = displayio.Group()
-display_group_bme = displayio.Group()
-
+display_group_imu = displayio.Group(scale=2)
+display_group_battery = displayio.Group(scale=2)
 display_group_enviro = displayio.Group(scale=2)
 
 display_group_menu = displayio.Group(scale=2)
@@ -152,34 +121,28 @@ epd_background = displayio.TileGrid(background_bitmap, pixel_shader=palette)
 epd_group_dope.append(epd_background)
 
 # Display Group Offsets
-display_group_imu.x = 0
-display_group_imu.y = 35
-display_group_bme.x = 0
-display_group_bme.y = 95
+display_group_imu.x = 10
+display_group_imu.y = 20
 
-display_group_menu.x = 20
+display_group_menu.x = 10
 display_group_enviro.x = 20
 
 epd_group_dope_table.x = 0
 epd_group_dope_table.y = 25
 
 # Merging groups to their respective main displays
-display_group_diag.append(display_group_battery)
-display_group_diag.append(display_group_imu)
-display_group_diag.append(display_group_bme)
-
 epd_group_dope.append(epd_group_cartridge)
 epd_group_dope.append(epd_group_dope_table)
 
 # Setup TFT Labels
-batt_percent_label = label.Label(font, text="REMAINING: {:.1f} %".format(bat.cell_percent), color=white, x=0, y=5)
-batt_voltage_label = label.Label(font, text="RAW VOLTS: {:.2f} V".format(bat.cell_voltage), color=white, x=0, y=15)
-batt_charge_rate_label = label.Label(font, text="(DIS)CHARGE: {:.2f} %/hr".format(bat.charge_rate), color=white, x=0, y=25)
-gyro_raw_label = label.Label(font, text="GYRO\r\nX: ----  Y: ---- Z: ---- rads/s", color=white, x=0, y=5)
-compass_label = label.Label(font, text="COMPASS\r\n--- degrees", color=white, x=0, y=35)
-temperature_label = label.Label(font, text="TEMP: {:.1f} C".format(bme.temperature), color=white,x=0, y=5)
-humidity_label = label.Label(font, text="RH: {:.1f} %".format(bme.humidity), color=white, x=0,y=15)
-pressure_label = label.Label(font, text="PRESS: {:.1f} hPa".format(bme.pressure), color=white, x=0, y=25)
+batt_percent_label = label.Label(font, text="", color=white, x=0, y=5)
+batt_voltage_label = label.Label(font, text="", color=white, x=0, y=15)
+batt_charge_rate_label = label.Label(font, text="", color=white, x=0, y=25)
+accel_raw_label = label.Label(font, text="", color=white, x=0, y=5)
+compass_label = label.Label(font, text="", color=white, x=0, y=35)
+temperature_label = label.Label(font, text="", color=white,x=0, y=5)
+humidity_label = label.Label(font, text="", color=white, x=0,y=15)
+pressure_label = label.Label(font, text="", color=white, x=0, y=25)
 
 # EPD Labels
 cartridge_label = label.Label(font, text="22LR CCI SV 40GR", color=black, x=0, y=5)
@@ -198,7 +161,7 @@ display_group_battery.append(batt_percent_label)
 display_group_battery.append(batt_voltage_label)
 display_group_battery.append(batt_charge_rate_label)
 
-display_group_imu.append(gyro_raw_label)
+display_group_imu.append(accel_raw_label)
 display_group_imu.append(compass_label)
 
 display_group_enviro.append(temperature_label)
@@ -211,15 +174,15 @@ epd_group_dope_table.append(drop_table_label)
 
 # Battery Display
 def display_update_battery():   
-    batt_percent_label.text = "BATTERY REMAINING: {:.1f}%".format(bat.cell_percent)
-    batt_voltage_label.text = "BATTERY VOLTAGE: {:.2f}V".format(bat.cell_voltage)
-    batt_charge_rate_label.text = "BATTERY (DIS)CHARGE RATE: {:.1f}#/hr".format(bat.charge_rate)
+    batt_percent_label.text = "REMAINING: {:.1f}%".format(bat.cell_percent)
+    batt_voltage_label.text = "BATT. VOLT: {:.2f}V".format(bat.cell_voltage)
+    batt_charge_rate_label.text = "(DIS)CHARGE RATE: {:.1f}%/hr".format(bat.charge_rate)
 
 # Gyro Display
 def display_update_gyro():
-    gyro_x, gyro_y, gyro_z = bno.gyro
+    accel_x, accel_y, accel_z = bno.acceleration
 
-    gyro_raw_label.text = "GYRO\r\nX: %0.4f  Y: %0.4f Z: %0.4f rads/s" % (gyro_x, gyro_y, gyro_z)
+    accel_raw_label.text = "X: %0.3f  Y: %0.3f Z: %0.3f  m/s^2" % (accel_x, accel_y, accel_z)
 
 # Compass Display
 def display_update_compass():
@@ -230,16 +193,13 @@ def display_update_compass():
     if compass_bearing < 0:
         compass_bearing += 360
     
-    compass_label.text = "MAGNETIC COMPASS\r\n{:.0f} degrees".format(compass_bearing)
+    compass_label.text = "COMPASS\r\n{:.0f} *M".format(compass_bearing)
 
 # Environmental Display
 def display_update_bme():
-    temperature_label.text = "TEMPERATURE: {:.1f} C".format(bme.temperature)
-    humidity_label.text = "HUMIDITY: {:.1f} %".format(bme.humidity)
-    pressure_label.text = "PRESSURE: {:.1f} hPa".format(bme.pressure)
-
-# display_epd.show(epd_group_dope)
-# display_epd.refresh()
+    temperature_label.text = "TEMP: {:.1f} C".format(bme.temperature)
+    humidity_label.text = "HUMI: {:.1f} %".format(bme.humidity)
+    pressure_label.text = "PRES: {:.1f} hPa".format(bme.pressure)
 
 # EPD Start Time
 epd_last_refreshed = -180.0
@@ -261,13 +221,7 @@ print("About to start the loop")
 display_tft.show(display_group_menu)
 
 while True:
-    # Update button states
-    button_select.update()
-    button_up.update()
-    button_down.update()
-    button_left.update()
-    button_right.update()
-    print("Button Update Complete")
+    update_buttons()
 
     if button_select.pressed:
         print("Board Button Pressed")
@@ -321,15 +275,15 @@ while True:
         if main_menu_index == 2:
             display_tft.show(display_group_enviro)
         if main_menu_index == 3:
-            display_tft.show(display_group_diag)
+            display_tft.show(display_group_battery)
 
     if button_left.pressed:
         print("Left Button Pressed")
-        main_menu_index = 0
         display_tft.show(display_group_menu)
 
+    update_buttons()
     display_update_battery()
     display_update_gyro()
+    update_buttons()
     display_update_compass()
     display_update_bme()
-    # display_tft.show(display_group_diag)
