@@ -53,6 +53,7 @@ button_right = Button(make_button(board.A4))
 
 # Check Button State - run this often
 def update_buttons():
+    print("Checking button state")
     button_select.update()
     button_up.update()
     button_down.update()
@@ -81,7 +82,7 @@ EPD_WIDTH = 128
 # Setup EPD Display Bus 
 display_epd_bus = displayio.FourWire(spi, command=epd_dc, chip_select=epd_cs, reset=epd_reset, baudrate=1000000)
 
-print("Display bus setup")
+print("EPD display bus setup")
 time.sleep(1)  # Wait a bit
 print("sleep")
 
@@ -97,6 +98,7 @@ display_epd = adafruit_uc8151d.UC8151D(
 
 # Create TFT display object
 display_tft = board.DISPLAY
+print("TFT display bus setup")
 
 # TFT Display Groups
 display_group_imu = displayio.Group(scale=2)
@@ -104,11 +106,13 @@ display_group_battery = displayio.Group(scale=2)
 display_group_enviro = displayio.Group(scale=2)
 
 display_group_menu = displayio.Group(scale=2)
+print("TFT display setup complete")
 
 # EPD Display Groups
 epd_group_dope = displayio.Group()
 epd_group_cartridge = displayio.Group()
 epd_group_dope_table = displayio.Group(scale=2)
+print("EPD display group setup complete")
 
 # Set a background
 background_bitmap = displayio.Bitmap(EPD_WIDTH, EPD_HEIGHT, 1)
@@ -143,6 +147,7 @@ compass_label = label.Label(font, text="", color=white, x=0, y=35)
 temperature_label = label.Label(font, text="", color=white,x=0, y=5)
 humidity_label = label.Label(font, text="", color=white, x=0,y=15)
 pressure_label = label.Label(font, text="", color=white, x=0, y=25)
+print("TFT labels setup complete")
 
 # EPD Labels
 cartridge_label = label.Label(font, text="22LR CCI SV 40GR", color=black, x=0, y=5)
@@ -171,6 +176,7 @@ display_group_enviro.append(pressure_label)
 epd_group_cartridge.append(cartridge_label)
 epd_group_dope_table.append(range_label)
 epd_group_dope_table.append(drop_table_label)
+print("Append labels to display groups compete")
 
 # Battery Display
 def display_update_battery():   
@@ -212,19 +218,18 @@ main_menu_labels = []
 
 print("main menu statics done")
 for i, item in enumerate(main_menu_items):
-    print("setting up main menu labels")
     menu_label = label.Label(font, padding_left=1,text=item, color=0xFFFFFF, x=0, y= 5 + i * 15)
     main_menu_labels.append(menu_label)
     display_group_menu.append(menu_label)
 
-print("About to start the loop")
+print("About to start the main loop")
 display_tft.show(display_group_menu)
 
 while True:
     update_buttons()
 
     if button_select.pressed:
-        print("Board Button Pressed")
+        print("Select Button Pressed")
 
     if button_up.pressed:
         print("Up Button Pressed")
