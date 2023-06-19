@@ -50,6 +50,7 @@ button_up = Button(make_button(board.A1))
 button_down = Button(make_button(board.A2))
 button_left = Button(make_button(board.A3))
 button_right = Button(make_button(board.A4))
+# button_board = Button(make_button(board.BUTTON))
 
 # Enable IMU
 bno.enable_feature(BNO_REPORT_ACCELEROMETER)
@@ -131,6 +132,10 @@ display_group_battery = displayio.Group()
 display_group_imu = displayio.Group()
 display_group_bme = displayio.Group()
 
+display_group_enviro = displayio.Group(scale=2)
+
+display_group_menu = displayio.Group(scale=2)
+
 # EPD Display Groups
 epd_group_dope = displayio.Group()
 epd_group_cartridge = displayio.Group()
@@ -151,6 +156,9 @@ display_group_imu.x = 0
 display_group_imu.y = 35
 display_group_bme.x = 0
 display_group_bme.y = 95
+
+display_group_menu.x = 20
+display_group_enviro.x = 20
 
 epd_group_dope_table.x = 0
 epd_group_dope_table.y = 25
@@ -189,11 +197,13 @@ drop_table_index = 0
 display_group_battery.append(batt_percent_label)
 display_group_battery.append(batt_voltage_label)
 display_group_battery.append(batt_charge_rate_label)
+
 display_group_imu.append(gyro_raw_label)
 display_group_imu.append(compass_label)
-display_group_bme.append(temperature_label)
-display_group_bme.append(humidity_label)
-display_group_bme.append(pressure_label)
+
+display_group_enviro.append(temperature_label)
+display_group_enviro.append(humidity_label)
+display_group_enviro.append(pressure_label)
 
 epd_group_cartridge.append(cartridge_label)
 epd_group_dope_table.append(range_label)
@@ -234,6 +244,22 @@ def display_update_bme():
 # EPD Start Time
 epd_last_refreshed = -180.0
 
+print("EPD TIME DONE")
+# Setup Menu Labels
+main_menu_items = ["LEVEL", "DOPE TABLE", "ENVIRONMENTAL", "BATTERY"]
+main_menu_index = 0
+main_menu_labels = []
+
+print("main menu statics done")
+for i, item in enumerate(main_menu_items):
+    print("setting up main menu labels")
+    menu_label = label.Label(font, padding_left=1,text=item, color=0xFFFFFF, x=0, y= 5 + i * 15)
+    main_menu_labels.append(menu_label)
+    display_group_menu.append(menu_label)
+
+print("About to start the loop")
+display_tft.show(display_group_menu)
+
 while True:
     # Update button states
     button_select.update()
@@ -241,42 +267,69 @@ while True:
     button_down.update()
     button_left.update()
     button_right.update()
-    # button_board.update()
-
-    # EPD Protection
+    print("Button Update Complete")
 
     if button_select.pressed:
         print("Board Button Pressed")
-        select_pressed = time.monotonic()
-        if select_pressed > epd_last_refreshed + 180.0:
-            print("Safe to update screen")
-            cartridge_types_index = (cartridge_types_index + 1) % len(cartridge_types)
-            drop_table_index = (drop_table_index + 1) % len(drop_table)
-            cartridge_label.text = cartridge_types[cartridge_types_index]
-            mrad_label.txt = drop_table[drop_table_index]
-            epd_last_refreshed = time.monotonic()
-            display_epd.show(epd_group_dope)
-            display_epd.refresh()
-        else:
-            print("EPD refreshed too early!")
-
-    # if button_select.pressed:
-    #     print("Select Button Pressed")
 
     if button_up.pressed:
         print("Up Button Pressed")
+        main_menu_index -= 1
+        if main_menu_index < 0:
+            main_menu_index = len(main_menu_items) - 1
+        elif button_down.pressed:
+            main_menu_index += 1
+        if main_menu_index >= len(main_menu_items):
+            main_menu_index = 0
     
     if button_down.pressed:
         print("Down Button Pressed")
-
-    if button_left.pressed:
-        print("Left Button Pressed")
+        main_menu_index += 1
+        if main_menu_index >= len(main_menu_items):
+            main_menu_index = 0
+    
+    # Update display with selected menu item
+    for i, label in enumerate(main_menu_labels):
+        if i == main_menu_index:
+            label.color = 0x000000  # Highlight selected item
+            label.background_color = 0xFFFFFF
+        else:
+            label.color = 0xFFFFFF
+            label.background_color = 0x000000
 
     if button_right.pressed:
         print("Right Button Pressed")
+        selected_item = main_menu_items[main_menu_index]
+        print("Selected item:", selected_item)
+        if main_menu_index == 0:
+            display_tft.show(display_group_imu)
+        if main_menu_index == 1:
+            print("SHOW DOPE SD")
+            # TODO: SD CARD LIST FILES
+            select_pressed = time.monotonic()
+            if select_pressed > epd_last_refreshed + 180.0:
+                print("Safe to update screen")
+                cartridge_types_index = (cartridge_types_index + 1) % len(cartridge_types)
+                drop_table_index = (drop_table_index + 1) % len(drop_table)
+                cartridge_label.text = cartridge_types[cartridge_types_index]
+                mrad_label.txt = drop_table[drop_table_index]
+                epd_last_refreshed = time.monotonic()
+                display_epd.show(epd_group_dope)
+                display_epd.refresh()
+            else:
+                print("EPD refreshed too early!")
+        if main_menu_index == 2:
+            display_tft.show(display_group_enviro)
+        if main_menu_index == 3:
+            display_tft.show(display_group_diag)
+
+    if button_left.pressed:
+        print("Left Button Pressed")
+        main_menu_index = 0
+        display_tft.show(display_group_menu)
 
     display_update_battery()
     display_update_gyro()
     display_update_compass()
     display_update_bme()
-    display_tft.show(display_group_diag)
+    # display_tft.show(display_group_diag)
